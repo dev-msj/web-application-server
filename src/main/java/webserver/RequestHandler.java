@@ -47,13 +47,13 @@ public class RequestHandler extends Thread {
 
     private String extractPath(InputStream in) throws IOException {
         String request = IOUtils.readData(new BufferedReader(new InputStreamReader(in)), in.available());
-        System.out.println("request = " + request);
+        
         return request.length() == 0 ? "" : getPathString(request);
     }
 
     private String getPathString(String request) {
         String path = request.split("\n")[0].split(" ")[1];
-        
+
         return path.equals("/") ? "/index.html" : path;
     }
 
