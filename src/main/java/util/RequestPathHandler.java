@@ -10,7 +10,9 @@ public class RequestPathHandler {
     private final String defaultPath = "./webapp/";
 
     public boolean isExistPath(final String path) {
-        return new File(defaultPath + path).exists();
+        File file = new File(defaultPath + path);
+
+        return file.exists() && file.isFile();
     }
 
     public String readData(final String path) {
