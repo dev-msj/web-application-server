@@ -19,6 +19,8 @@
 * webapp 경로에서 path에 해당하는 파일을 로드한다.
 * 파일을 내보낸다.
 
+<p style="color: red">html에서 가장 첫번째에 있는 css 파일의 request 내용이 empty("")로 들어오는데 이유를 모르겠음</p>
+
 ### 요구사항 2 - get 방식으로 회원가입
 * 
 

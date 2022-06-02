@@ -48,7 +48,7 @@ public class RequestHandler extends Thread {
 
     private String extractPath(InputStream in) throws IOException {
         String request = IOUtils.readData(new BufferedReader(new InputStreamReader(in)), in.available());
-        System.out.println("request = " + request);
+
         return isEmptyRequest(request) ? "" : getPathString(request);
     }
 
