@@ -48,18 +48,18 @@ public class RequestHandler extends Thread {
 
     private String extractPath(InputStream in) throws IOException {
         String request = IOUtils.readData(new BufferedReader(new InputStreamReader(in)), in.available());
-
+        System.out.println("request = " + request);
         return isEmptyRequest(request) ? "" : getPathString(request);
+    }
+
+    private boolean isEmptyRequest(String request) {
+        return request.length() == 0;
     }
 
     private String getPathString(String request) {
         String path = request.split("\n")[0].split(" ")[1];
 
         return isDefaultPath(path) ? "/index.html" : path;
-    }
-
-    private boolean isEmptyRequest(String request) {
-        return request.length() == 0;
     }
 
     private boolean isDefaultPath(String path) {

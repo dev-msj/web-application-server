@@ -14,6 +14,6 @@ public class RequestPathHandlerTest {
 
     @Test
     public void getFileData() {
-        Assert.assertNotEquals("IOException", handler.readData(path));
+        Assert.assertNotEquals(0, handler.readData(path).length);
     }
 }
