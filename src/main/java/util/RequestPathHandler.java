@@ -1,10 +1,6 @@
 package util;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.stream.Stream;
+import java.io.*;
 
 public class RequestPathHandler {
     private final String defaultPath = "./webapp";
@@ -15,21 +11,20 @@ public class RequestPathHandler {
         return file.exists() && file.isFile();
     }
 
-    public String readData(final String path) {
-//        TODO: html, script 외의 파일을 열 때는 string으로 가져오면 에러가 나므로 byte타입 형태로 가져오게 변경 필요.
-        try(Stream<String> stream = Files.lines(Paths.get(defaultPath + path))) {
-            return parseDataToString(stream);
+    public byte[] readData(final String path) {
+        try(RandomAccessFile randomAccessFile = new RandomAccessFile(defaultPath + path, "r")) {
+            return parseFileToByteArray(randomAccessFile);
         } catch (IOException e) {
             System.out.println(e.toString());
 
-            return "IOException";
+            return new byte[] {};
         }
     }
 
-    private String parseDataToString(final Stream<String> stream) throws IOException {
-        StringBuilder stringBuilder = new StringBuilder();
-        stream.forEach(line -> stringBuilder.append(line).append("\n"));
+    private byte[] parseFileToByteArray(final RandomAccessFile randomAccessFile) throws IOException {
+        byte[] data = new byte[(int) randomAccessFile.length()];
+        randomAccessFile.readFully(data);
 
-        return stringBuilder.toString();
+        return data;
     }
 }

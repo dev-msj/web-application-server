@@ -28,10 +28,10 @@ public class RequestHandler extends Thread {
             String path = extractPath(in);
 
             if (requestPathHandler.isExistPath(path)) {
-                String html = requestPathHandler.readData(path);
+                byte[] data = requestPathHandler.readData(path);
 
                 // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
-                httpResponseUtils.setBody(html.getBytes());
+                httpResponseUtils.setBody(data);
                 httpResponseUtils.response200Header();
                 httpResponseUtils.responseBody();
 
