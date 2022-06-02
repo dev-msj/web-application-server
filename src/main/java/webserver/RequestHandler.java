@@ -5,6 +5,7 @@ import java.net.Socket;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import util.HttpResponseUtils;
 import util.IOUtils;
 import util.RequestPathHandler;
 
@@ -22,24 +23,24 @@ public class RequestHandler extends Thread {
                 connection.getPort());
 
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
-            DataOutputStream dos = new DataOutputStream(out);
             RequestPathHandler requestPathHandler = new RequestPathHandler();
+            HttpResponseUtils httpResponseUtils = new HttpResponseUtils(out);
             String path = extractPath(in);
 
             if (requestPathHandler.isExistPath(path)) {
                 String html = requestPathHandler.readData(path);
 
                 // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
-                byte[] body = html.getBytes();
-                response200Header(dos, body.length);
-                responseBody(dos, body);
+                httpResponseUtils.setBody(html.getBytes());
+                httpResponseUtils.response200Header();
+                httpResponseUtils.responseBody();
 
                 return;
             }
 
-            byte[] body = "페이지를 찾을 수 없습니다!".getBytes();
-            response404Header(dos, body.length);
-            responseBody(dos, body);
+            httpResponseUtils.setBody("페이지를 찾을 수 없습니다!".getBytes());
+            httpResponseUtils.response404Header();
+            httpResponseUtils.responseBody();
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -47,44 +48,21 @@ public class RequestHandler extends Thread {
 
     private String extractPath(InputStream in) throws IOException {
         String request = IOUtils.readData(new BufferedReader(new InputStreamReader(in)), in.available());
-        
-        return request.length() == 0 ? "" : getPathString(request);
+
+        return isEmptyRequest(request) ? "" : getPathString(request);
     }
 
     private String getPathString(String request) {
         String path = request.split("\n")[0].split(" ")[1];
 
-        return path.equals("/") ? "/index.html" : path;
+        return isDefaultPath(path) ? "/index.html" : path;
     }
 
-    private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
-        try {
-            dos.writeBytes("HTTP/1.1 200 OK \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
-            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
-            dos.writeBytes("\r\n");
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
+    private boolean isEmptyRequest(String request) {
+        return request.length() == 0;
     }
 
-    private void response404Header(DataOutputStream dos, int lengthOfBodyContent) {
-        try {
-            dos.writeBytes("HTTP/1.1 404 Not Found \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
-            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
-            dos.writeBytes("\r\n");
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
-    }
-
-    private void responseBody(DataOutputStream dos, byte[] body) {
-        try {
-            dos.write(body, 0, body.length);
-            dos.flush();
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
+    private boolean isDefaultPath(String path) {
+        return path.equals("/");
     }
 }
