@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 public class RequestPathHandler {
-    private final String defaultPath = "./webapp/";
+    private final String defaultPath = "./webapp";
 
     public boolean isExistPath(final String path) {
         File file = new File(defaultPath + path);
@@ -16,6 +16,7 @@ public class RequestPathHandler {
     }
 
     public String readData(final String path) {
+//        TODO: html, script 외의 파일을 열 때는 string으로 가져오면 에러가 나므로 byte타입 형태로 가져오게 변경 필요.
         try(Stream<String> stream = Files.lines(Paths.get(defaultPath + path))) {
             return parseDataToString(stream);
         } catch (IOException e) {
