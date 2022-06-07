@@ -6,7 +6,6 @@ import java.net.Socket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.HttpResponseUtils;
-import util.IOUtils;
 import util.RequestPathHandler;
 
 public class RequestHandler extends Thread {
@@ -25,6 +24,7 @@ public class RequestHandler extends Thread {
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             RequestPathHandler requestPathHandler = new RequestPathHandler();
             HttpResponseUtils httpResponseUtils = new HttpResponseUtils(out);
+
             String path = extractPath(in);
 
             if (requestPathHandler.isExistPath(path)) {
@@ -47,22 +47,20 @@ public class RequestHandler extends Thread {
     }
 
     private String extractPath(InputStream in) throws IOException {
-        String request = IOUtils.readData(new BufferedReader(new InputStreamReader(in)), in.available());
+        String request = parseInputStreamToString(in);
 
-        return isEmptyRequest(request) ? "" : getPathString(request);
+        return isEmptyRequest(request) ? "" : getPathFromRequest(request);
+    }
+
+    private String parseInputStreamToString(InputStream in) throws IOException {
+        return new BufferedReader(new InputStreamReader(in)).readLine();
     }
 
     private boolean isEmptyRequest(String request) {
         return request.length() == 0;
     }
 
-    private String getPathString(String request) {
-        String path = request.split("\n")[0].split(" ")[1];
-
-        return isDefaultPath(path) ? "/index.html" : path;
-    }
-
-    private boolean isDefaultPath(String path) {
-        return path.equals("/");
+    private String getPathFromRequest(String request) {
+        return request.split(" ")[1];
     }
 }
