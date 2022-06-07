@@ -22,7 +22,8 @@
 ~~html에서 가장 첫번째에 있는 css 파일의 request 내용이 empty("")로 들어오는데 이유를 모르겠음~~
 
 ### 요구사항 2 - get 방식으로 회원가입
-* 
+* query string으로 들어오는 key, value값을 추출한다. (HttpRequestUtils를 활용)
+* User Class에 key, value 값들을 저장한다.
 
 ### 요구사항 3 - post 방식으로 회원가입
 * 
