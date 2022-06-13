@@ -2,9 +2,12 @@ package webserver;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Map;
 
+import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import util.HttpRequestUtils;
 import util.HttpResponseUtils;
 import util.RequestPathHandler;
 
@@ -25,7 +28,17 @@ public class RequestHandler extends Thread {
             RequestPathHandler requestPathHandler = new RequestPathHandler();
             HttpResponseUtils httpResponseUtils = new HttpResponseUtils(out);
 
-            String path = extractPath(in);
+            String[] requestInfo = extractRequestInfo(in);
+            String httpMethod = requestInfo[0];
+            String path = requestInfo[1];
+
+            if (isGet(httpMethod)) {
+                handleQueryString(path);
+            } else if (isPost(httpMethod)) {
+                
+            } else {
+                throw new RuntimeException("잘못된 요청입니다.");
+            }
 
             if (requestPathHandler.isExistPath(path)) {
                 byte[] data = requestPathHandler.readData(path);
@@ -46,21 +59,35 @@ public class RequestHandler extends Thread {
         }
     }
 
-    private String extractPath(InputStream in) throws IOException {
-        String request = parseInputStreamToString(in);
-
-        return isEmptyRequest(request) ? "" : getPathFromRequest(request);
+    private String[] extractRequestInfo(InputStream in) throws IOException {
+        return new BufferedReader(new InputStreamReader(in)).readLine().split(" ");
     }
 
-    private String parseInputStreamToString(InputStream in) throws IOException {
-        return new BufferedReader(new InputStreamReader(in)).readLine();
+    private boolean isGet(String httpMethod) {
+        return "GET".equals(httpMethod);
     }
 
-    private boolean isEmptyRequest(String request) {
-        return request.length() == 0;
+    private boolean isPost(String httpMethod) {
+        return "POST".equals(httpMethod);
     }
 
-    private String getPathFromRequest(String request) {
-        return request.split(" ")[1];
+    private void handleQueryString(String path) {
+        String[] splitPath = path.split("\\?");
+        if (splitPath.length > 1) {
+            saveUser(splitPath);
+        }
+    }
+
+    private void saveUser(String[] splitPath) {
+        String queryString = splitPath[1];
+        Map<String, String> userInfo = HttpRequestUtils.parseQueryString(queryString);
+        User user = new User(
+                userInfo.get("userId"),
+                userInfo.get("password"),
+                userInfo.get("name"),
+                userInfo.get("email")
+        );
+
+        System.out.println("user.toString() = " + user.toString());
     }
 }
