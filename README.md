@@ -26,7 +26,8 @@
 * User Class에 key, value 값들을 저장한다.
 
 ### 요구사항 3 - post 방식으로 회원가입
-* 
+* HTTP Body에 있는 key, value값을 추출한다.
+* User Class에 key, value 값들을 저장한다.
 
 ### 요구사항 4 - redirect 방식으로 이동
 * 
