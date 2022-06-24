@@ -35,9 +35,11 @@ public class RequestHandler extends Thread {
                 return;
             }
 
-            String path = getPath(requestInfo);
+            String path = getPath(requestInfo).split("\\?")[0];
 
-            handleQueryString(requestInfo);
+            if (path.equals("/user/create")) {
+                handleQueryString(requestInfo);
+            }
 
             if (requestPathHandler.isExistPath(path)) {
                 byte[] data = requestPathHandler.readData(path);
