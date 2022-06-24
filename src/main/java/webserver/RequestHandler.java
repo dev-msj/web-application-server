@@ -2,13 +2,19 @@ package webserver;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Stream;
 
+import com.google.common.io.CharStreams;
 import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.HttpRequestUtils;
 import util.HttpResponseUtils;
+import util.IOUtils;
 import util.RequestPathHandler;
 
 public class RequestHandler extends Thread {
@@ -27,15 +33,20 @@ public class RequestHandler extends Thread {
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             RequestPathHandler requestPathHandler = new RequestPathHandler();
             HttpResponseUtils httpResponseUtils = new HttpResponseUtils(out);
-
             String[] requestInfo = extractRequestInfo(in);
-            String httpMethod = requestInfo[0];
-            String path = requestInfo[1];
+
+            if (isEmptyRequest(requestInfo)) {
+                return;
+            }
+
+            String[] httpRequestInfo = requestInfo[0].split(" ");
+            String httpMethod = httpRequestInfo[0];
+            String path = httpRequestInfo[1];
 
             if (isGet(httpMethod)) {
                 handleQueryString(path);
             } else if (isPost(httpMethod)) {
-                
+
             } else {
                 throw new RuntimeException("잘못된 요청입니다.");
             }
@@ -43,7 +54,6 @@ public class RequestHandler extends Thread {
             if (requestPathHandler.isExistPath(path)) {
                 byte[] data = requestPathHandler.readData(path);
 
-                // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
                 httpResponseUtils.setBody(data);
                 httpResponseUtils.response200Header();
                 httpResponseUtils.responseBody();
@@ -60,7 +70,18 @@ public class RequestHandler extends Thread {
     }
 
     private String[] extractRequestInfo(InputStream in) throws IOException {
-        return new BufferedReader(new InputStreamReader(in)).readLine().split(" ");
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
+        StringBuilder stringBuilder = new StringBuilder();
+
+        while (bufferedReader.ready()) {
+            stringBuilder.append(bufferedReader.readLine()).append("\n");
+        }
+
+        return stringBuilder.toString().split("\n");
+    }
+
+    private boolean isEmptyRequest(String[] requestInfo) {
+        return requestInfo.length == 1 && requestInfo[0].equals("");
     }
 
     private boolean isGet(String httpMethod) {
