@@ -1,21 +1,17 @@
 package webserver;
 
-import java.io.*;
-import java.net.Socket;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.stream.Stream;
-
-import com.google.common.io.CharStreams;
 import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.HttpRequestUtils;
 import util.HttpResponseUtils;
-import util.IOUtils;
 import util.RequestPathHandler;
+
+import java.io.*;
+import java.net.Socket;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -39,17 +35,9 @@ public class RequestHandler extends Thread {
                 return;
             }
 
-            String[] httpRequestInfo = requestInfo[0].split(" ");
-            String httpMethod = httpRequestInfo[0];
-            String path = httpRequestInfo[1];
+            String path = getPath(requestInfo);
 
-            if (isGet(httpMethod)) {
-                handleQueryString(path);
-            } else if (isPost(httpMethod)) {
-
-            } else {
-                throw new RuntimeException("잘못된 요청입니다.");
-            }
+            handleQueryString(requestInfo);
 
             if (requestPathHandler.isExistPath(path)) {
                 byte[] data = requestPathHandler.readData(path);
@@ -69,6 +57,30 @@ public class RequestHandler extends Thread {
         }
     }
 
+    private void handleQueryString(String[] requestInfo) {
+        String httpMethod = getHttpMethod(requestInfo);
+        String queryString = "";
+
+        if (isGet(httpMethod)) {
+            String[] splitPath = getPath(requestInfo).split("\\?");
+            if (checkQueryStringExist(splitPath)) {
+                queryString = splitPath[1];
+            }
+        } else if (isPost(httpMethod)) {
+            queryString = requestInfo[requestInfo.length - 1];
+        } else {
+            throw new RuntimeException("잘못된 요청입니다.");
+        }
+
+        if (checkQueryString(queryString)) {
+            saveUser(queryString);
+        }
+    }
+
+    private boolean checkQueryStringExist(String[] splitPath) {
+        return splitPath.length > 1;
+    }
+
     private String[] extractRequestInfo(InputStream in) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
         StringBuilder stringBuilder = new StringBuilder();
@@ -84,6 +96,14 @@ public class RequestHandler extends Thread {
         return requestInfo.length == 1 && requestInfo[0].equals("");
     }
 
+    private String getPath(String[] requestInfo) {
+        return requestInfo[0].split(" ")[1];
+    }
+
+    private String getHttpMethod(String[] requestInfo) {
+        return requestInfo[0].split(" ")[0];
+    }
+
     private boolean isGet(String httpMethod) {
         return "GET".equals(httpMethod);
     }
@@ -92,15 +112,14 @@ public class RequestHandler extends Thread {
         return "POST".equals(httpMethod);
     }
 
-    private void handleQueryString(String path) {
-        String[] splitPath = path.split("\\?");
-        if (splitPath.length > 1) {
-            saveUser(splitPath);
-        }
+    private boolean checkQueryString(String queryString) {
+        Pattern pattern = Pattern.compile("([^\\?]+)(\\?.*)?");
+        Matcher m = pattern.matcher(queryString);
+
+        return m.matches();
     }
 
-    private void saveUser(String[] splitPath) {
-        String queryString = splitPath[1];
+    private void saveUser(String queryString) {
         Map<String, String> userInfo = HttpRequestUtils.parseQueryString(queryString);
         User user = new User(
                 userInfo.get("userId"),
